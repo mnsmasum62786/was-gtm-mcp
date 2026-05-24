@@ -4,6 +4,25 @@ Manage Google Tag Manager from Claude Desktop, Cursor, or any MCP-compatible cli
 
 100 percent local. Your credentials stay on your machine. Built by [Abdullah Al Masum](https://webanalyticssolution.com) — Web Analytics Solution (WAS). MIT licensed.
 
+## Prerequisites
+
+You need three things installed on your computer. All free, ~5 minutes total if you don't already have them.
+
+| | Required for | How to install |
+|---|---|---|
+| **Node.js 18 or newer** | running `npx` | Mac: `brew install node` or download from https://nodejs.org · Windows: download installer from https://nodejs.org · Linux: `sudo apt install nodejs npm` |
+| **Git** | letting `npx` clone the package from GitHub | Mac: `brew install git` (or just run `git --version` once and macOS will offer to install Xcode Command Line Tools) · Windows: download from https://git-scm.com · Linux: `sudo apt install git` |
+| **A terminal** | running the commands below | Mac: open **Terminal.app** (Spotlight → "Terminal") · Windows: open **PowerShell** or **Windows Terminal** · Linux: any terminal emulator |
+
+Quick verification — paste both commands in your terminal:
+
+```bash
+node --version   # should print v18.x or newer
+git --version    # should print git version 2.x or newer
+```
+
+If either prints "command not found", install it using the link above before continuing.
+
 ## Quick start — 3 steps
 
 ### Step 1 — Create your Google Cloud OAuth client (5 min, one-time)
@@ -142,9 +161,121 @@ Each user has their own Google Cloud project + OAuth client. Your API quota is y
 
 **"Google did NOT return a refresh_token"** — Google only sends a refresh token on the first consent for a given OAuth client + Google account combination. Revoke access at https://myaccount.google.com/permissions and re-run auth.
 
-## Advanced — env-var override
+## Multi-account setup — connect multiple Google accounts at once
 
-Power users can bypass the config file entirely with env vars in Claude Desktop config:
+If you manage GTM for several Google accounts (your agency + several clients, for example), you can wire up all of them in one Claude Desktop config. Each account shows up as its own connector.
+
+### How it works
+
+The server checks environment variables before the local config file:
+
+```
+GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN
+  ↓ if set in Claude Desktop config "env" block → use those
+  ↓ otherwise → read ~/.was-gtm-mcp/config.json
+```
+
+So you create one OAuth Desktop client (shared across all accounts), generate one refresh token per Google account, then put each refresh token in its own `mcpServers` entry.
+
+### Step 1 — Create one shared OAuth client (one-time)
+
+Follow Steps 1 from the Quick Start above to create a single OAuth Desktop client in Google Cloud Console. Note your **Client ID** and **Client Secret** — these are shared across all accounts.
+
+### Step 2 — Generate a refresh token for each Google account
+
+For each account you want to connect, repeat this loop:
+
+```bash
+# 1. Sign out of all Google accounts in your browser first
+#    Open https://accounts.google.com → "Sign out of all accounts"
+#    Then sign in to ONLY the account you want to connect now
+
+# 2. Run auth
+npx -y github:mnsmasum62786/was-gtm-mcp auth
+
+# 3. Paste your Client ID + Secret when asked
+# 4. Browser opens → click Allow → "Connected" page appears
+# 5. Read the refresh token from the saved config file
+cat ~/.was-gtm-mcp/config.json
+```
+
+The output looks like:
+
+```json
+{
+  "client_id": "604966466270-abc.apps.googleusercontent.com",
+  "client_secret": "GOCSPX-shared-secret",
+  "refresh_token": "1//0gAccountA-RefreshTokenABC123",
+  "saved_at": "..."
+}
+```
+
+**Copy the `refresh_token` value into a temporary note** and label it (e.g. "Account A — My Agency"). Then repeat steps 1–5 for Account B, Account C, etc.
+
+Important: each `auth` run overwrites `~/.was-gtm-mcp/config.json`, so always copy the refresh token before running auth for the next account.
+
+### Step 3 — Build your Claude Desktop config
+
+After collecting refresh tokens for all accounts, open your Claude Desktop config and paste one `mcpServers` entry per account. Use a clear connector name (the key in quotes) so you can address each one by name in chat.
+
+```json
+{
+  "mcpServers": {
+    "GTM My Agency": {
+      "command": "npx",
+      "args": ["-y", "github:mnsmasum62786/was-gtm-mcp"],
+      "env": {
+        "GOOGLE_CLIENT_ID": "604966466270-abc.apps.googleusercontent.com",
+        "GOOGLE_CLIENT_SECRET": "GOCSPX-shared-secret",
+        "GOOGLE_REFRESH_TOKEN": "1//0gAccountA-RefreshTokenABC123"
+      }
+    },
+    "GTM Client 1": {
+      "command": "npx",
+      "args": ["-y", "github:mnsmasum62786/was-gtm-mcp"],
+      "env": {
+        "GOOGLE_CLIENT_ID": "604966466270-abc.apps.googleusercontent.com",
+        "GOOGLE_CLIENT_SECRET": "GOCSPX-shared-secret",
+        "GOOGLE_REFRESH_TOKEN": "1//0gAccountB-RefreshTokenDEF456"
+      }
+    },
+    "GTM Client 2": {
+      "command": "npx",
+      "args": ["-y", "github:mnsmasum62786/was-gtm-mcp"],
+      "env": {
+        "GOOGLE_CLIENT_ID": "604966466270-abc.apps.googleusercontent.com",
+        "GOOGLE_CLIENT_SECRET": "GOCSPX-shared-secret",
+        "GOOGLE_REFRESH_TOKEN": "1//0gAccountC-RefreshTokenGHI789"
+      }
+    }
+  }
+}
+```
+
+Fully quit Claude (Cmd+Q on Mac, fully exit on Windows) and reopen.
+
+### Step 4 — Use them in chat
+
+You'll see three connectors in Claude: **GTM My Agency**, **GTM Client 1**, **GTM Client 2**. Address each one by name:
+
+> "Using GTM My Agency, list my GTM accounts."
+> "Using GTM Client 1, show all containers."
+> "Using GTM Client 2, create a new workspace called 'experiment-A'."
+
+Claude routes each request to the correct connector and uses the matching refresh token.
+
+### Multi-account gotchas
+
+| Problem | Fix |
+|---|---|
+| Browser keeps signing into the same Google account | Sign out of all accounts at https://accounts.google.com before each `auth` run |
+| "Google did not return a refresh_token" on 2nd account | You already authorized this OAuth client with that account before. Revoke at https://myaccount.google.com/permissions, then re-run |
+| Forgot to copy a refresh token before running the next auth | Re-run auth for that account — you get a fresh token. The previous one is auto-revoked |
+| One connector fails but others work | Open `claude_desktop_config.json` and check that account's `GOOGLE_REFRESH_TOKEN` isn't truncated or has stray quotes |
+
+## Advanced — single-account env-var override
+
+If you have only one account but still want to keep credentials in Claude Desktop config (instead of `~/.was-gtm-mcp/config.json`), use the same env-var block with one entry:
 
 ```json
 {
@@ -162,7 +293,7 @@ Power users can bypass the config file entirely with env vars in Claude Desktop 
 }
 ```
 
-Any env var present overrides the matching field in `config.json`.
+Any env var present overrides the matching field in `config.json`. You can also delete `~/.was-gtm-mcp/config.json` since env vars fully replace it.
 
 ## License
 
