@@ -49,7 +49,7 @@ Paste this block (merge with any existing `mcpServers`):
 ```json
 {
   "mcpServers": {
-    "gtm": {
+    "WAS GTM MCP": {
       "command": "npx",
       "args": ["-y", "github:mnsmasum62786/was-gtm-mcp"]
     }
@@ -149,7 +149,7 @@ Power users can bypass the config file entirely with env vars in Claude Desktop 
 ```json
 {
   "mcpServers": {
-    "gtm": {
+    "WAS GTM MCP": {
       "command": "npx",
       "args": ["-y", "github:mnsmasum62786/was-gtm-mcp"],
       "env": {
