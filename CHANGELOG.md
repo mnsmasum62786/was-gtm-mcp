@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.4 — 2026-07-28
+
+### Fixes
+
+- **Windows browser open — final fix using rundll32.** `explorer.exe URL` worked when called manually from a shell but silently failed when spawned by Node's `child_process.spawn` (CreateProcess bypasses Windows shell URL handling). Switched to `rundll32.exe url.dll,FileProtocolHandler URL` — this is the exact function Windows itself calls when a URL is clicked, so it's bulletproof under all spawn contexts.
+- **Surfacing spawn errors.** Added `child.on('error', ...)` listener so browser-open failures now print a helpful message instead of silently swallowing.
+
+
 ## 3.0.3 — 2026-07-24
 
 ### Fixes
