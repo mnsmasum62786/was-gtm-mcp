@@ -24,7 +24,7 @@ function openBrowser(url) {
   const cmds = {
     darwin: { cmd: 'open', args: [url] },
     linux: { cmd: 'xdg-open', args: [url] },
-    win32: { cmd: 'explorer.exe', args: [url] },
+    win32: { cmd: 'rundll32.exe', args: ['url.dll,FileProtocolHandler', url] },
   };
   const c = cmds[process.platform];
   if (!c) {
