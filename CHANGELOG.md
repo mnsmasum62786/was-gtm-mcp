@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.2 — 2026-07-24
+
+### Fixes
+
+- **Windows browser open — URL truncation bug.** `openBrowser()` on Windows used `cmd /c start "" URL` where `cmd` treated `&`, `?`, `=` in the OAuth URL as shell metacharacters. Result: the browser opened a truncated URL missing `response_type`, `client_id`, `scope`, etc., causing Google to return `Access blocked: Required parameter is missing: response_type`. Now the URL is wrapped in double quotes so cmd passes it through intact.
+
+
 ## 3.0.1 — 2026-07-24
 
 ### Fixes
