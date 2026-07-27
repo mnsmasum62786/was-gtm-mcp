@@ -1,7 +1,7 @@
 {
   "name": "was-gtm-mcp",
-  "version": "3.0.0",
-  "description": "Shareable GTM MCP server — manage Google Tag Manager from any MCP-capable client (Claude Desktop, Cursor, etc) with your own Google OAuth credentials. Built by WAS (Web Analytics Solution).",
+  "version": "3.0.1",
+  "description": "Shareable GTM MCP server \u2014 manage Google Tag Manager from any MCP-capable client (Claude Desktop, Cursor, etc) with your own Google OAuth credentials. Built by WAS (Web Analytics Solution).",
   "type": "module",
   "bin": {
     "was-gtm-mcp": "./cli.js"

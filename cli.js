@@ -9,7 +9,7 @@
  *   was-gtm-mcp help      Show usage.
  */
 
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { CONFIG_FILE } from './oauth-config.js';
 
@@ -17,7 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const cmd = (process.argv[2] || '').toLowerCase();
 
 if (cmd === 'auth') {
-  const { runAuthFlow } = await import(join(__dirname, 'auth.js'));
+  const { runAuthFlow } = await import(pathToFileURL(join(__dirname, 'auth.js')).href);
   try {
     await runAuthFlow();
     process.exit(0);
@@ -26,12 +26,12 @@ if (cmd === 'auth') {
     process.exit(1);
   }
 } else if (cmd === 'logout') {
-  const { deleteConfigFile } = await import(join(__dirname, 'auth.js'));
+  const { deleteConfigFile } = await import(pathToFileURL(join(__dirname, 'auth.js')).href);
   const deleted = await deleteConfigFile();
   console.log(deleted ? `Removed ${CONFIG_FILE}` : 'No saved credentials to remove.');
   process.exit(0);
 } else if (cmd === 'status') {
-  const { readConfigFile } = await import(join(__dirname, 'auth.js'));
+  const { readConfigFile } = await import(pathToFileURL(join(__dirname, 'auth.js')).href);
   const cfg = await readConfigFile();
   if (!cfg) {
     console.log('Not configured. Run `npx -y was-gtm-mcp auth` to connect.');
@@ -68,7 +68,7 @@ Docs:  https://github.com/mnsmasum62786/was-gtm-mcp
 `);
   process.exit(0);
 } else if (!cmd) {
-  await import(join(__dirname, 'server.js'));
+  await import(pathToFileURL(join(__dirname, 'server.js')).href);
 } else {
   console.error(`Unknown command: "${cmd}"\nRun "was-gtm-mcp help" for usage.`);
   process.exit(1);

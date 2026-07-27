@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.1 — 2026-07-24
+
+### Fixes
+
+- **Windows Node 24+ compatibility** — wrap dynamic `import()` calls in `pathToFileURL().href` to fix `ERR_UNSUPPORTED_ESM_URL_SCHEME` when the module path starts with a Windows drive letter (e.g. `C:\Users\...`). Node 24's strict ESM loader was interpreting `C:` as a URL protocol. No behavior change — same auth flow, just now works on Windows.
+
+
 ## 3.0.0 — 2026-05-24
 
 Initial public release.
