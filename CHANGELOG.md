@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.3 — 2026-07-24
+
+### Fixes
+
+- **Windows browser open — switched from `cmd /c start` to `explorer.exe`.** `cmd /c start "" URL` had persistent URL-escaping problems on Windows regardless of quoting strategy (prefixed backslash, truncation at `&`, etc.). `explorer.exe URL` natively hands off to the default browser via the Windows URL protocol handler — no shell parsing involved. Fixes "Windows cannot find '\https://...'" popup dialog during auth.
+
+
 ## 3.0.2 — 2026-07-24
 
 ### Fixes
